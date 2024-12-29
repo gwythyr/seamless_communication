@@ -55,7 +55,13 @@ class VocoderAgent(TextToSpeechAgent):  # type: ignore
             else:
                 return ReadAction()
 
+        print("states.tgt_lang", states.tgt_lang)
+        print("self.tgt_lang", self.tgt_lang)
         tgt_lang = states.tgt_lang if states.tgt_lang else self.tgt_lang
+        print("tgt_lang", tgt_lang)
+        if tgt_lang is None:
+            tgt_lang = "eng"
+            
         u = units[0][0]
 
         wav = self.vocoder(u, tgt_lang, self.speaker_id, dur_prediction=False)
