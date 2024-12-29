@@ -205,7 +205,9 @@ class MMATextDecoderAgent(OnlineTextDecoderAgent):  # type: ignore
     def run_decoder(
         self, states: DecoderAgentStates, pred_indices: List[int]
     ) -> Tuple[int, float, Tensor]:
+        # Prepare input for translation
         if len(pred_indices) == 0:
+            # Add language tags and start tokens for initial translation
             self.enforce_tgt_lang_in_prefix(states)
             target_input = torch.tensor(
                 self.prefix_indices + states.target_indices,
@@ -213,21 +215,27 @@ class MMATextDecoderAgent(OnlineTextDecoderAgent):  # type: ignore
                 dtype=torch.int64,
             ).unsqueeze(0)
         else:
+            # Continue with previous predictions
             target_input = torch.tensor(
                 pred_indices[-1:], device=self.device, dtype=torch.int64
             ).unsqueeze(0)
 
+        # Run the actual translation model
         encoder_output = states.source
         decoder_output, _, p_choose = self.model.decode(
             target_input, None, encoder_output, None, state_bag=self.state_bag
         )
 
+        # Get next token prediction
         logits = self.model.project(decoder_output)
+        
+        # Block repeated n-grams if needed
         if self.block_ngrams and states.source_finished:
             all_indices = states.target_indices + pred_indices
             blocked_indices = all_indices[-4:]
             logits[:, :, blocked_indices] = float("-inf")
 
+        # Get the most likely next token
         index = int(logits[0, -1].argmax().item())
         _, tgt_len, src_len = p_choose.size()
 

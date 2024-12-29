@@ -29,10 +29,12 @@ class VocoderAgent(TextToSpeechAgent):  # type: ignore
         super().__init__(args)
 
         logger.info(
-            f"Loading the Vocoder model: {args.vocoder_name} on device={args.device}, dtype={args.dtype}"
+            f"Loading the Vocoder model: {args.vocoder_name} on device=cpu, dtype={args.dtype}"
         )
         self.vocoder = load_vocoder_model(
-            args.vocoder_name, device=args.device, dtype=args.dtype
+            args.vocoder_name, 
+            device=torch.device('cpu'),  # Force CPU
+            dtype=args.dtype
         )
         self.vocoder.eval()
 
